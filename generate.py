@@ -270,15 +270,16 @@ class CrosswordCreator():
         # select an unassigned variable
         var = self.select_unassigned_variable(assignment)
 
-        # iterate domain values
-        for word in self.domains[var]:
+        # iterate domain values - using least-constraining heuristic
+        for word in self.order_domain_values(var, assignment):
             # if value consistent with assignment
             assignment[var] = word
             if self.consistent(assignment):  
+                
                 result = self.backtrack(assignment)           
                 if result:
                     return result
-            assignment.pop(var)
+            assignment.pop(var) # delete var from assignment
         
         return None
 
