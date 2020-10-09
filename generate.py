@@ -274,17 +274,75 @@ class CrosswordCreator():
         for word in self.order_domain_values(var, assignment):
             # if value consistent with assignment
             assignment[var] = word
+            inferences = dict()
             if self.consistent(assignment):  
-                
+                # maintain arc-consistency
+                inferences = self.inference(var, assignment)
+                if inferences:
+                    # add inferences to assignment
+                    assignment.update(inferences)
+                # recursively run Backtrack
                 result = self.backtrack(assignment)           
                 if result:
                     return result
-            assignment.pop(var) # delete var from assignment
-        
+            # delete var and inferences from assignment
+            assignment.pop(var)
+            for inference in inferences:
+                assignment.pop(inference)
+
         return None
 
 
+    def inference(self, x, assignment):
+        """
+        Returns all the inferences that can be made through enforcing arc-consistency.
+
+        @param assignment   current assignment (dictionary)
+        @param x            Variable, that last assignment was made to
+        @return             inferences: dict(Variable: value) or None if AC-3 was failure
+        """
+        # create a queue of arcs between neighbours of var and var
+        arcs = Queue()
+        for neighbour in self.crossword.neighbors(x):
+            arc = (neighbour, x)
+            arcs.put(arc)
+        
+        # run AC-3, check if it wasn't failure
+        result = self.ac3(arcs)
+        if result is None:
+            return None
+
+        # gather inferences
+        inferences = self.get_inferences_from_domains(assignment)
+        return inferences
+
+
+    def get_inferences_from_domains(self, assignment):
+        """
+        Returns inferences from the domains, i.e. variables with only one value
+        that are not yet in the assignment.
+
+        @param assignment   current assignment (dictionary)
+        @return             inferences: dict(Variable: value)
+        """
+        inferences = {
+            var:tuple(words)[0] for (var, words) in self.domains.items() # 'var:words[0]' doesn't work (TypeError: 'set' object does not support indexing)
+            if var not in assignment 
+            if len(words) == 1
+        }
+        return inferences
+
     def get_words_to_remove(self, x, y, word_y=None):
+        """
+        Returns set of values to remove from `self.domains[x]` for which there is no
+        possible corresponding value for `y` in `self.domains[y]`.
+
+        @param x        Variable object
+        @param y        Variable object
+        @param word_y   if defined, function will return list of words in domain[x]
+                        that conflicts with word_y
+        @return         set of values (strings)
+        """
         words_to_remove = set()
         i, j = self.crossword.overlaps[x, y] # where x's ith character overlaps y's jth character
         for word_x in self.domains[x]:

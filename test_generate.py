@@ -523,6 +523,86 @@ class CrosswordCreatorTestCase(unittest.TestCase):
         result = cc.backtrack(assignment)
         self.assertIsNone(result)
 
+
+    def test_get_inferences_from_domains_returns_empty_dict_if_no_inference_in_domains(self):
+        self.maxDiff = None
+
+        mock_variable1 = Mock(spec=Variable, name="var1")
+        mock_variable1.length = 1
+        mock_variable2 = Mock(spec=Variable, name="var2")
+        mock_variable2.length = 1
+        mock_variable3 = Mock(spec=Variable, name="var3")
+        mock_variable3.length = 1
+
+        mock_crossword = Mock(spec=Crossword)
+        mock_crossword.variables = {mock_variable1, mock_variable2, mock_variable3}
+        mock_crossword.words = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
+        mock_crossword.overlaps = {}
+
+        cc = generate.CrosswordCreator(mock_crossword)
+        cc.domains = {
+            mock_variable1: {"A", "B"},
+            mock_variable2: {"C", "D"},
+            mock_variable3: {"E", "F", "G"},
+        }
+        assignment = {}
+        result = cc.get_inferences_from_domains(assignment)
+        expected = dict()
+        self.assertDictEqual(result, expected)
+
+
+    def test_get_inferences_from_domains_returns_empty_dict_if_already_in_assignment(self):
+        self.maxDiff = None
+
+        mock_variable1 = Mock(spec=Variable, name="var1")
+        mock_variable1.length = 1
+        mock_variable2 = Mock(spec=Variable, name="var2")
+        mock_variable2.length = 1
+        mock_variable3 = Mock(spec=Variable, name="var3")
+        mock_variable3.length = 1
+
+        mock_crossword = Mock(spec=Crossword)
+        mock_crossword.variables = {mock_variable1, mock_variable2, mock_variable3}
+        mock_crossword.words = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
+        mock_crossword.overlaps = {}
+
+        cc = generate.CrosswordCreator(mock_crossword)
+        cc.domains = {
+            mock_variable1: {"A"},
+            mock_variable2: {"C", "D"},
+            mock_variable3: {"E", "F", "G"},
+        }
+        assignment = {mock_variable1: "A"}
+        result = cc.get_inferences_from_domains(assignment)
+        expected = dict()
+        self.assertDictEqual(result, expected)
+
+    def test_get_inferences_from_domains(self):
+        self.maxDiff = None
+
+        mock_variable1 = Mock(spec=Variable, name="var1")
+        mock_variable1.length = 1
+        mock_variable2 = Mock(spec=Variable, name="var2")
+        mock_variable2.length = 1
+        mock_variable3 = Mock(spec=Variable, name="var3")
+        mock_variable3.length = 1
+
+        mock_crossword = Mock(spec=Crossword)
+        mock_crossword.variables = {mock_variable1, mock_variable2, mock_variable3}
+        mock_crossword.words = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
+        mock_crossword.overlaps = {}
+
+        cc = generate.CrosswordCreator(mock_crossword)
+        cc.domains = {
+            mock_variable1: {"A"},
+            mock_variable2: {"C", "D"},
+            mock_variable3: {"E", "F", "G"},
+        }
+        assignment = {}
+        result = cc.get_inferences_from_domains(assignment)
+        expected = {mock_variable1: "A"}
+        self.assertDictEqual(result, expected)
+
 # End class
 
 
@@ -555,6 +635,10 @@ def suite():
 
     suite.addTest(CrosswordCreatorTestCase('test_backtrack_returns_assignment_if_solvable'))
     suite.addTest(CrosswordCreatorTestCase('test_backtrack_returns_none_if_unsolvable'))
+
+    suite.addTest(CrosswordCreatorTestCase('test_get_inferences_from_domains_returns_empty_dict_if_no_inference_in_domains'))
+    suite.addTest(CrosswordCreatorTestCase('test_get_inferences_from_domains_returns_empty_dict_if_already_in_assignment'))
+    suite.addTest(CrosswordCreatorTestCase('test_get_inferences_from_domains'))
         
     return suite
 
